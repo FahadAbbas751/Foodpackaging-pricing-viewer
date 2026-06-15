@@ -60,10 +60,32 @@ td.per{color:#555}
 .our-price-input.has-value{border-color:#4caf50;background:#f0faf2;color:#2e7d32;font-weight:500}
 .saved-dot{width:6px;height:6px;border-radius:50%;background:#4caf50;display:none;flex-shrink:0}
 .saved-dot.show{display:inline-block}
+
+.lock-screen{position:fixed;inset:0;background:#f5f5f3;display:flex;align-items:center;justify-content:center;z-index:9999}
+.lock-card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:40px 36px;width:340px;text-align:center}
+.lock-card h2{font-size:18px;font-weight:600;margin-bottom:6px;color:#1a1a1a}
+.lock-card p{font-size:13px;color:#888;margin-bottom:24px}
+.lock-icon{font-size:32px;margin-bottom:16px}
+.lock-card input[type=password]{width:100%;padding:10px 14px;border:1px solid #e5e5e5;border-radius:8px;font-size:14px;outline:none;text-align:center;letter-spacing:3px;margin-bottom:12px;background:#fafafa}
+.lock-card input[type=password]:focus{border-color:#aaa;background:#fff}
+.lock-card button{width:100%;padding:10px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
+.lock-card button:hover{background:#333}
+.lock-error{font-size:12px;color:#e53935;margin-top:10px;min-height:18px}
+.locked body-content{display:none}
 @media print{.sidebar,.filters,.btn-reset,.sidebar-search{display:none}.layout{height:auto;display:block}.main{padding:16px}.variant-card{break-inside:avoid}.our-price-input{border:none;background:transparent;font-weight:500;color:#2e7d32}}
 </style>
 </head>
 <body>
+<div class="lock-screen" id="lock-screen">
+  <div class="lock-card">
+    <div class="lock-icon">🔒</div>
+    <h2>noissue Pricing Viewer</h2>
+    <p>Enter password to continue</p>
+    <input type="password" id="pwd-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPwd()">
+    <button onclick="checkPwd()">Unlock</button>
+    <div class="lock-error" id="lock-error"></div>
+  </div>
+</div>
 <header>
   <h1>noissue — Product Pricing</h1>
   <span id="hdr-meta"></span>
@@ -212,6 +234,31 @@ function handlePriceInput(el) {
   if(val.trim()!=='') { el.classList.add('has-value'); if(dot) dot.classList.add('show'); }
   else { el.classList.remove('has-value'); if(dot) dot.classList.remove('show'); }
 }
+
+const PASS_HASH = 'e2d3592f8f251478fce8702ab93c81b178160f99b504e838b75ed18a8b6b582d';
+async function hashStr(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function checkPwd() {
+  const val = document.getElementById('pwd-input').value;
+  const h = await hashStr(val);
+  if(h === PASS_HASH) {
+    document.getElementById('lock-screen').style.display = 'none';
+    sessionStorage.setItem('unlocked','1');
+  } else {
+    document.getElementById('lock-error').textContent = 'Incorrect password. Try again.';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+  }
+}
+(async()=>{
+  if(sessionStorage.getItem('unlocked')==='1') {
+    document.getElementById('lock-screen').style.display='none';
+  } else {
+    setTimeout(()=>document.getElementById('pwd-input').focus(), 100);
+  }
+})();
 
 document.getElementById('prod-search').addEventListener('input', e => renderSidebar(e.target.value));
 document.getElementById('hdr-meta').textContent = `${DATA.length} products`;
