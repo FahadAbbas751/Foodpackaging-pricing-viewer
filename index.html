@@ -181,7 +181,8 @@ function renderVariants(p) {
     const rows = (v.pricingTiers||[]).map(t=>{
       const slug = p.slug||'';
       const combo = v.combination||{};
-      const stored = getPrice(slug, combo, t.qty);
+      const key = priceKey(slug, combo, t.qty);
+      const stored = localStorage.getItem(key) || '';
       const hasVal = stored !== '';
       return `<tr>
         <td class="qty">${t.qty}</td>
@@ -189,7 +190,7 @@ function renderVariants(p) {
         <td class="per">$${typeof t.perUnit==='number'?t.perUnit.toFixed(4):t.perUnit}</td>
         <td>${t.save?`<span class="save-tag">${t.save}</span>`:'—'}</td>
         <td>${t.isQuote?'<span class="quote-tag">Quote</span>':'<span class="check">✓</span>'}</td>
-        <td><div class="our-price-wrap"><span>$</span><input class="our-price-input${hasVal?' has-value':''}" type="number" min="0" step="0.01" placeholder="0.00" value="${stored}" data-slug="${slug}" data-combo='${JSON.stringify(combo)}' data-qty="${t.qty}" oninput="handlePriceInput(this)"><span class="saved-dot${hasVal?' show':''}"></span></div></td>
+        <td><div class="our-price-wrap"><span>$</span><input class="our-price-input${hasVal?' has-value':''}" type="number" min="0" step="0.01" placeholder="0.00" value="${stored}" data-key="${key.replace(/"/g,'&quot;')}" onchange="handlePriceInput(this)"><span class="saved-dot${hasVal?' show':''}"></span></div></td>
       </tr>`;
     }).join('');
     return `<div class="variant-card">
@@ -203,11 +204,10 @@ function renderVariants(p) {
 }
 
 function handlePriceInput(el) {
-  const slug = el.dataset.slug;
-  const combo = JSON.parse(el.dataset.combo);
-  const qty = el.dataset.qty;
+  const key = el.dataset.key;
   const val = el.value;
-  savePrice(slug, combo, qty, val);
+  if(val.trim()==='') localStorage.removeItem(key);
+  else localStorage.setItem(key, val.trim());
   const dot = el.nextElementSibling;
   if(val.trim()!=='') { el.classList.add('has-value'); if(dot) dot.classList.add('show'); }
   else { el.classList.remove('has-value'); if(dot) dot.classList.remove('show'); }
