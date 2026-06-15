@@ -235,15 +235,9 @@ function handlePriceInput(el) {
   else { el.classList.remove('has-value'); if(dot) dot.classList.remove('show'); }
 }
 
-const PASS_HASH = 'e2d3592f8f251478fce8702ab93c81b178160f99b504e838b75ed18a8b6b582d';
-async function hashStr(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-async function checkPwd() {
+function checkPwd() {
   const val = document.getElementById('pwd-input').value;
-  const h = await hashStr(val);
-  if(h === PASS_HASH) {
+  if(val === atob('MTIzNDU2U2V2ZW5A')) {
     document.getElementById('lock-screen').style.display = 'none';
     sessionStorage.setItem('unlocked','1');
   } else {
@@ -252,13 +246,11 @@ async function checkPwd() {
     document.getElementById('pwd-input').focus();
   }
 }
-(async()=>{
-  if(sessionStorage.getItem('unlocked')==='1') {
-    document.getElementById('lock-screen').style.display='none';
-  } else {
-    setTimeout(()=>document.getElementById('pwd-input').focus(), 100);
-  }
-})();
+if(sessionStorage.getItem('unlocked')==='1') {
+  document.getElementById('lock-screen').style.display='none';
+} else {
+  setTimeout(()=>{ const el=document.getElementById('pwd-input'); if(el) el.focus(); }, 150);
+}
 
 document.getElementById('prod-search').addEventListener('input', e => renderSidebar(e.target.value));
 document.getElementById('hdr-meta').textContent = `${DATA.length} products`;
